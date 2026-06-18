@@ -53,38 +53,75 @@ jobs:
           mkdir -p "$HOME/.claude"
           echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
 
-      # ── Phase 1 task: snake game ──────────────────────────────────────────
-      # This will be replaced with the real SEO/GEO prompt in Phase 3.
-      - name: Run Claude task
+      # ── Phase 1 task: snake game (verified ✓) ────────────────────────────
+      # - name: Run snake game task
+      #   run: |
+      #     claude -p \
+      #       "Build a single self-contained classic Snake game. Requirements:
+      #        - All HTML, CSS, and JavaScript in one file: snake/index.html
+      #        - Arrow key controls, smooth 60fps feel
+      #        - Score counter, speed increases every 5 food items
+      #        - Game-over screen with final score and restart button
+      #        - Clean dark retro aesthetic, no external dependencies
+      #        Write the file at snake/index.html." \
+      #       --permission-mode bypassPermissions \
+      #       --allowedTools "Write,Edit,Bash" \
+      #       --output-format text
+      # - name: Open PR (snake game)
+      #   uses: peter-evans/create-pull-request@v6
+      #   with:
+      #     branch: claude/snake-game
+      #     title: "Claude (Phase 1): Snake game proof-of-concept"
+      #     commit-message: "Add snake game [Claude headless / MiniMax-M2.7]"
+      #     body: |
+      #       **Phase:** 1 — proof-of-concept (snake game)
+      #       **Model:** MiniMax-M2.7 via `claude -p`
+      #     add-paths: |
+      #       snake/
+
+      # ── Install marketing plugin (contains /marketing:seo-audit skill) ────
+      - name: Install marketing plugin
         run: |
+          claude plugin marketplace add anthropics/knowledge-work-plugins 2>/dev/null || true
+          claude plugin install marketing@knowledge-work-plugins
+
+      # ── Phase 2: full-site SEO audit for www.pixshop.art ─────────────────
+      - name: Run SEO audit
+        run: |
+          DATE=$(date +%Y-%m-%d)
           claude -p \
-            "Build a single self-contained classic Snake game. Requirements:
-             - All HTML, CSS, and JavaScript in one file: snake/index.html
-             - Arrow key controls, smooth 60fps feel
-             - Score counter, speed increases every 5 food items
-             - Game-over screen with final score and restart button
-             - Clean dark retro aesthetic, no external dependencies
-             Write the file at snake/index.html." \
+            "Use the /marketing:seo-audit skill to run a comprehensive full-site SEO audit for https://www.pixshop.art.
+
+             After the audit, write the full report to reports/pixshop-art-seo-${DATE}.md.
+
+             The report must include:
+             - Executive summary (top 3 priority issues)
+             - Technical SEO findings (crawlability, meta tags, canonical, sitemap, robots.txt)
+             - On-page SEO findings (titles, headings, content, keywords)
+             - Performance signals (Core Web Vitals if detectable)
+             - Actionable recommendations, prioritised as High / Medium / Low
+             - Quick wins that can be implemented immediately
+
+             Be thorough and specific to pixshop.art." \
             --permission-mode bypassPermissions \
-            --allowedTools "Write,Edit,Bash" \
+            --allowedTools "Write,Edit,Bash,WebFetch,WebSearch" \
             --output-format text
 
-      # ── Open PR with whatever Claude produced ─────────────────────────────
+      # ── Open PR with the audit report ─────────────────────────────────────
       - name: Open PR
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: claude/snake-game
-          title: "Claude (Phase 1): Snake game proof-of-concept"
-          commit-message: "Add snake game [Claude headless / MiniMax-M2.7]"
+          branch: claude/seo-audit-pixshop
+          title: "Claude SEO audit: pixshop.art"
+          commit-message: "Add SEO audit report for pixshop.art [Claude / MiniMax-M2.7]"
           body: |
-            ## Automated Claude Code run
+            ## Automated SEO Audit — pixshop.art
 
-            **Phase:** 1 — proof-of-concept (snake game)
+            **Skill:** `/marketing:seo-audit`
+            **Target:** https://www.pixshop.art
             **Model:** MiniMax-M2.7 via `claude -p`
             **Triggered by:** ${{ github.event_name }}
 
-            Open `snake/index.html` in a browser to verify the game runs.
-
-            > In Phase 2 this PR will contain SEO/GEO skills output.
+            See `reports/` for the full audit report.
           add-paths: |
-            snake/
+            reports/
