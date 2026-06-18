@@ -1,0 +1,88 @@
+name: Claude Routine (SEO/GEO)
+
+on:
+  workflow_dispatch:
+  # schedule:                     # uncomment in Phase 3
+  #   - cron: "0 6 * * 1"        # Mondays 06:00 UTC
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    env:
+      ANTHROPIC_BASE_URL: https://api.minimax.io/anthropic
+      ANTHROPIC_AUTH_TOKEN: ${{ secrets.MINIMAX_API_KEY }}
+      ANTHROPIC_MODEL: MiniMax-M3
+      ANTHROPIC_DEFAULT_SONNET_MODEL: MiniMax-M3
+      ANTHROPIC_DEFAULT_OPUS_MODEL: MiniMax-M3
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: MiniMax-M3
+      CLAUDE_CODE_AUTO_COMPACT_WINDOW: "512000"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Cache global npm installs so repeated runs are faster
+      - name: Cache npm global dir
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm-global
+          key: npm-global-claude-code-${{ runner.os }}
+
+      - name: Install Claude Code
+        run: |
+          npm config set prefix "$HOME/.npm-global"
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          npm i -g @anthropic-ai/claude-code
+          echo "$HOME/.npm-global/bin" >> $GITHUB_PATH
+
+      # Skip interactive onboarding on a fresh runner
+      - name: Bypass Claude onboarding
+        run: |
+          mkdir -p "$HOME/.claude"
+          echo '{"hasCompletedOnboarding": true}' > "$HOME/.claude.json"
+
+      # ── Phase 1 task: snake game ──────────────────────────────────────────
+      # This will be replaced with the real SEO/GEO prompt in Phase 3.
+      - name: Run Claude task
+        run: |
+          claude -p \
+            "Build a single self-contained classic Snake game. Requirements:
+             - All HTML, CSS, and JavaScript in one file: snake/index.html
+             - Arrow key controls, smooth 60fps feel
+             - Score counter, speed increases every 5 food items
+             - Game-over screen with final score and restart button
+             - Clean dark retro aesthetic, no external dependencies
+             Write the file at snake/index.html." \
+            --permission-mode bypassPermissions \
+            --allowedTools "Write,Edit,Bash" \
+            --output-format text
+
+      # ── Open PR with whatever Claude produced ─────────────────────────────
+      - name: Open PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: claude/snake-game
+          title: "Claude (Phase 1): Snake game proof-of-concept"
+          commit-message: "Add snake game [Claude headless / MiniMax-M3]"
+          body: |
+            ## Automated Claude Code run
+
+            **Phase:** 1 — proof-of-concept (snake game)
+            **Model:** MiniMax-M3 via `claude -p`
+            **Triggered by:** ${{ github.event_name }}
+
+            Open `snake/index.html` in a browser to verify the game runs.
+
+            > In Phase 2 this PR will contain SEO/GEO skills output.
+          add-paths: |
+            snake/
