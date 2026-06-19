@@ -19,6 +19,10 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
+          # anthropic_api_key satisfies the action's own credential validation.
+          # ANTHROPIC_AUTH_TOKEN in env overrides it at the network level with
+          # Bearer auth, which is what MiniMax expects.
+          anthropic_api_key: ${{ secrets.MINIMAX_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: |
             Build a single self-contained classic Snake game.
