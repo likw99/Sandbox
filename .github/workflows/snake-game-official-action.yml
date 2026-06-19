@@ -1,0 +1,40 @@
+name: Snake Game (claude-code-action test)
+
+# Test: MiniMax config with anthropics/claude-code-action@v1
+# Verifies that ANTHROPIC_BASE_URL + ANTHROPIC_AUTH_TOKEN env override works
+# with the official action (no anthropic_api_key: param needed).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  snake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Build a single self-contained classic Snake game.
+
+            Requirements:
+            - All HTML, CSS, and JavaScript in one file: snake/index.html
+            - Arrow key controls, smooth 60fps feel
+            - Score counter, speed increases every 5 food items
+            - Game-over screen with final score and restart button
+            - Clean dark retro aesthetic, no external dependencies
+
+            Write the file at snake/index.html.
+          claude_args: "--max-turns 20 --allowedTools Write,Edit,Bash"
+        env:
+          ANTHROPIC_BASE_URL: https://api.minimaxi.com/anthropic
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.MINIMAX_API_KEY }}
+          ANTHROPIC_MODEL: MiniMax-M2.7
+          API_TIMEOUT_MS: "3000000"
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
